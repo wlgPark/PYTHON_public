@@ -1,0 +1,62 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Feb 12 14:34:26 2020
+@author: g-hey
+"""
+
+ import urllib.request
+ 
+ api_url = """http://openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/getCtprvnMesureSidoLIst?
+ serviceKey=***get yours***
+ &numOfRows=10
+ &pageNo=1
+ &sidoName=%EC%84%9C%EC%9A%B8
+ &searchCondition=DAILY"""
+ 
+ 
+ api_url = "http://openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/getCtprvnMesureSidoLIst?serviceKey=***get yours***&numOfRows=10&pageNo=1&sidoName=%EC%84%9C%EC%9A%B8&searchCondition=DAILY"
+
+ # getting responce from url
+ request = urllib.request.Request(api_url)
+
+ response = urllib.request.urlopen(request)
+ rescode = response.getcode()
+ if(rescode==200):
+     response_body = response.read()
+     print(response_body.decode('utf-8'))
+ else:
+     print("Error Code:" + rescode)
+
+
+#xml parsing
+import xml.etree.ElementTree as ET
+root = ET.fromstring(response_body.decode('utf-8'))
+tmp_root = root.find('body')
+
+date_lst = []
+city_lst = []
+pm10_lst = []
+pm25_lst = []
+
+for i in tmp_root.findall('items'):
+    for j in i.findall('item'):
+            for date in j.findall('dataTime'):
+                date_lst.append(date.text)
+            for city in j.findall('cityName'):
+                city_lst.append(city.text)
+            for pm10 in j.findall('pm10Value'):
+                pm10_lst.append(pm10.text)
+            for pm25 in j.findall('pm25Value'):
+                pm25_lst.append(pm25.text)  
+                
+# save it as dataframe               
+import pandas as pd          
+df =  pd.DataFrame()              
+
+df['date'] =  date_lst
+df['cityName'] =  city_lst             
+df['pm10'] =  pm10_lst
+df['pm25'] =  pm25_lst          
+
+#export csv file
+df.to_csv('api_test.csv',encoding='cp949',index=False)   
